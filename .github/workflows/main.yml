@@ -1,11 +1,11 @@
-name: Run Telegram Bot
+name: Run Telegram Bot - Server 1
 
 on:
   push:
     branches: [ "main", "master" ]
   schedule:
-    # ٥ کاتژمێر جارێک خۆی ئۆتۆماتیکی دەست پێ دەکاتەوە تا بێ بڕانەوە ئۆنلاین بێت
-    - cron: '0 */5 * * *'
+    # هەموو ٤ کاتژمێر جارێک لە خولەکی ٠٠ هەڵدەبێت
+    - cron: '0 */4 * * *'
   workflow_dispatch:
 
 jobs:
