@@ -1,71 +1,58 @@
 import os
-import yt_dlp
+import requests
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
 TOKEN = "8990062832:AAEGVGJum4r6erE25mqDFuSoah7zOdv1ShM"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("سڵاو! سپاس بۆ بەکارهێنانی ئەم بۆتە ❤️\nتکایە لینکی ڤیدیۆکەم بۆ بنێرە تا بۆت دابەزێنم.")
+    await update.message.reply_text("سڵاو! سپاس بۆ بەکارهێنانی ئەم بۆتە ❤️\nتکایە لینکی ڤیدیۆی YouTube یان تۆڕە کۆمەڵایەتییەکانم بۆ بنێرە.")
 
 async def download_media(update: Update, context: ContextTypes.DEFAULT_TYPE):
     url = update.message.text.strip()
     msg = await update.message.reply_text("دەستکرا بە پرۆسەی داگرتن... تکایە چاوەڕێ بکە ⏳")
 
-    ydl_opts = {
-        'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
-        'outtmpl': 'downloads/%(title)s.%(ext)s',
-        'merge_output_format': 'mp4',
-        'quiet': True,
-        'no_warnings': True,
-        'extractor_args': {
-            'youtube': {
-                'player_client': ['ios', 'android', 'web']
-            }
-        },
-        'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3',
-            'preferredquality': '192',
-        }],
-        'keepvideo': True,
-    }
-
     try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            filename = ydl.prepare_filename(info)
+        # بەکارهێنانی API بۆ تێپەڕاندنی بلۆکی IPی سێرڤەر
+        api_url = f"https://api.cobalt.tools/api/json"
+        headers = {
+            "Accept": "application/json",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "url": url,
+            "vCodec": "h264"
+        }
+
+        response = requests.post(api_url, json=payload, headers=headers)
+        data = response.json()
+
+        if "url" in data:
+            download_link = data["url"]
+            video_data = requests.get(download_link).content
             
-            base_filename, _ = os.path.splitext(filename)
-            mp3_file = f"{base_filename}.mp3"
-            video_file = f"{base_filename}.mp4"
+            file_path = "video.mp4"
+            with open(file_path, "wb") as f:
+                f.write(video_data)
 
-        if os.path.exists(mp3_file):
-            await update.message.reply_text("🎵 فایلی دەنگ (Audio):")
-            with open(mp3_file, 'rb') as audio:
-                await update.message.reply_audio(audio)
-            os.remove(mp3_file)
-
-        if os.path.exists(video_file):
             await update.message.reply_text("🎬 فایلی ڤیدیۆ (Video):")
-            with open(video_file, 'rb') as video:
+            with open(file_path, "rb") as video:
                 await update.message.reply_video(video)
-            os.remove(video_file)
 
-        await msg.delete()
+            os.remove(file_path)
+            await msg.delete()
+        else:
+            await msg.edit_text("کێشەیەک لە لینکی سەرچاوەدا هەیە یان پشتیوانی ناکرێت.")
 
     except Exception as e:
         await msg.edit_text(f"کێشەیەک ڕوویدا لە کاتی داگرتندا: {str(e)}")
 
 def main():
-    if not os.path.exists('downloads'):
-        os.makedirs('downloads')
-        
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, download_media))
 
-    print("بۆتەکە چالاک کرا و ئامادەی ئیشکردنە...")
+    print("بۆتەکە چالاک کرا...")
     app.run_polling()
 
 if __name__ == '__main__':
