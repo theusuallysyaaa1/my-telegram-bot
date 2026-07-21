@@ -6,16 +6,19 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 TOKEN = "8990062832:AAEGVGJum4r6erE25mqDFuSoah7zOdv1ShM"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("سڵاو! بەستەری (Link) ڤیدیۆکەم بۆ بنێرە تا وەک ڤیدیۆ و دەنگ بۆت دابەزێنم.")
+    await update.message.reply_text("سڵاو! سپاس بۆ بەکارهێنانی ئەم بۆتە ❤️\nتکایە لینکی ڤیدیۆکەم بۆ بنێرە تا بۆت دابەزێنم.")
 
 async def download_media(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    url = update.message.text
+    url = update.message.text.strip()
     msg = await update.message.reply_text("دەستکرا بە پرۆسەی داگرتن... تکایە چاوەڕێ بکە ⏳")
 
     ydl_opts = {
-        'format': 'bestvideo+bestaudio/best',
+        'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
         'outtmpl': 'downloads/%(title)s.%(ext)s',
         'merge_output_format': 'mp4',
+        'quiet': True,
+        'no_warnings': True,
+        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
