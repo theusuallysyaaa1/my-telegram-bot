@@ -1,0 +1,10 @@
+name: Run Telegram Bot - Server 2
+
+on:
+  schedule:
+    - cron: '30 */4 * * *'
+  workflow_dispatch:
+
+jobs:
+  call-runner:
+    uses: ./.github/workflows/bot-task.yml
