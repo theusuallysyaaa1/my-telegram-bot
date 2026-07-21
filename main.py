@@ -7,7 +7,9 @@ TOKEN = "8990062832:AAEGVGJum4r6erE25mqDFuSoah7zOdv1ShM"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "سڵاو! لینکی (YouTube, Instagram, TikTok, Facebook) بنێرە، دەستبەجێ ڤیدیۆ و دەنگەکەت بۆ دابەزێنم 🎬🎵"
+        "سڵاو! لینکی (YouTube, Instagram, TikTok, Facebook) بنێرە:\n\n"
+        "🎬 بۆ ڤیدیۆ: ڤیدیۆکەت بۆ دەنێرم.\n"
+        "🎵 بۆ MP3: فەرماندەی دەنگ بنێرە یان تەنها لینک بنێرە، دەنگەکەی جیا دەکەمەوە."
     )
 
 async def download_media(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -16,10 +18,10 @@ async def download_media(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not (url.startswith("http://") or url.startswith("https://")):
         return
 
-    msg = await update.message.reply_text("دەستکرا بە پرۆسەی داگرتنی فایدەکە... ⏳")
+    msg = await update.message.reply_text("دەستکرا بە داگرتنی فایلەکە... ⏳")
 
-    # ڕێکخستنی گشتی بۆ هەموو پلاتفۆرمەکان (YouTube, Insta, TikTok, FB)
-    ydl_opts_base = {
+    # ڕێکخستنی بنەڕەتی بۆ بەزاندنی ئاستەنگەکان
+    ydl_opts = {
         'quiet': True,
         'no_warnings': True,
         'nocheckcertificate': True,
@@ -28,58 +30,47 @@ async def download_media(update: Update, context: ContextTypes.DEFAULT_TYPE):
             'youtube': {
                 'player_client': ['android', 'web']
             }
-        }
-    }
-
-    # ۱. داگرتنی ڤیدیۆ
-    video_opts = {
-        **ydl_opts_base,
-        'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
-        'outtmpl': 'downloads/%(title)s_video.%(ext)s',
-        'max_filesize': 50000000, # سنووری ۵۰ مێگابایت بۆ تلیگرام
-    }
-
-    # ۲. داگرتنی دەنگ (MP3)
-    audio_opts = {
-        **ydl_opts_base,
-        'format': 'bestaudio/best',
-        'outtmpl': 'downloads/%(title)s_audio.%(ext)s',
-        'postprocessors': [{
-            'key': 'FFmpegExtractAudio',
-            'preferredcodec': 'mp3',
-            'preferredquality': '192',
-        }],
+        },
+        'outtmpl': 'downloads/%(title)s.%(ext)s',
     }
 
     try:
-        # پرۆسەی داگرتن و ناردنی ڤیدیۆ
+        # ۱. سەرەتا هەوڵ دەدەین ڤیدیۆیەکی پاک داگرین
+        video_opts = {
+            **ydl_opts,
+            'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+        }
+
         with yt_dlp.YoutubeDL(video_opts) as ydl:
-            info_v = ydl.extract_info(url, download=True)
-            v_filename = ydl.prepare_filename(info_v)
+            info = ydl.extract_info(url, download=True)
+            filename = ydl.prepare_filename(info)
 
-        if os.path.exists(v_filename):
-            await update.message.reply_text("🎬 **فایلی ڤیدیۆ:**")
-            with open(v_filename, 'rb') as video:
-                await update.message.reply_video(video)
-            os.remove(v_filename)
+        # ناردنی ڤیدیۆ ئەگەر هەبوو
+        if os.path.exists(filename):
+            await update.message.reply_text("🎬 **ڤیدیۆ:**")
+            with open(filename, 'rb') as f:
+                await update.message.reply_video(f)
+            
+            # دروستکردنی کۆپییەک بە دەنگی MP3 ڕاستەوخۆ لە ڤیدیۆ داگیراوەکە بێ دووبارە داگرتنەوە!
+            base, ext = os.path.splitext(filename)
+            mp3_filename = base + ".mp3"
+            
+            # بەکارهێنانی ffmpeg بۆ وەرگرتنی دەنگ بەبێ داگرتنەوەی لینکەکە
+            os.system(f'ffmpeg -y -i "{filename}" -q:a 0 -map a "{mp3_filename}"')
 
-        # پرۆسەی داگرتن و ناردنی MP3
-        with yt_dlp.YoutubeDL(audio_opts) as ydl:
-            info_a = ydl.extract_info(url, download=True)
-            a_filename = ydl.prepare_filename(info_a)
-            if not a_filename.endswith('.mp3'):
-                a_filename = os.path.splitext(a_filename)[0] + '.mp3'
+            if os.path.exists(mp3_filename):
+                await update.message.reply_text("🎵 **فایلی دەنگی (MP3):**")
+                with open(mp3_filename, 'rb') as audio:
+                    await update.message.reply_audio(audio)
+                os.remove(mp3_filename)
 
-        if os.path.exists(a_filename):
-            await update.message.reply_text("🎵 **فایلی دەنگی (MP3):**")
-            with open(a_filename, 'rb') as audio:
-                await update.message.reply_audio(audio)
-            os.remove(a_filename)
+            # سڕینەوەی ڤیدیۆکە لە سێرڤەر
+            os.remove(filename)
 
         await msg.delete()
 
     except Exception as e:
-        await msg.edit_text(f"کێشەیەک ڕوویدا لە کاتی داگرتن:\n{str(e)}")
+        await msg.edit_text(f"کێشەیەک ڕوویدا:\n{str(e)}")
 
 def main():
     if not os.path.exists('downloads'):
@@ -89,7 +80,7 @@ def main():
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, download_media))
 
-    print("بۆتەکە چالاک کرا و ئۆنلاینە...")
+    print("بۆتەکە ئۆنلاینە...")
     app.run_polling()
 
 if __name__ == '__main__':
