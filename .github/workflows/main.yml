@@ -3,6 +3,9 @@ name: Run Telegram Bot
 on:
   push:
     branches: [ "main", "master" ]
+  schedule:
+    # ٥ کاتژمێر جارێک خۆی ئۆتۆماتیکی دەست پێ دەکاتەوە تا بێ بڕانەوە ئۆنلاین بێت
+    - cron: '0 */5 * * *'
   workflow_dispatch:
 
 jobs:
