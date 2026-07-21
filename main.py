@@ -6,46 +6,47 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 TOKEN = "8990062832:AAEGVGJum4r6erE25mqDFuSoah7zOdv1ShM"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    await update.message.reply_text("سڵاو! سپاس بۆ بەکارهێنانی ئەم بۆتە ❤️\nتکایە لینکی ڤیدیۆی YouTube یان تۆڕە کۆمەڵایەتییەکانم بۆ بنێرە.")
+    await update.message.reply_text("سڵاو! سپاس بۆ هەڵبژاردن و بەکارهێنانی ئەم بۆتە ❤️\nتکایە لینکی ڤیدیۆکەم بۆ بنێرە تا بۆت دابەزێنم.")
 
 async def download_media(update: Update, context: ContextTypes.DEFAULT_TYPE):
     url = update.message.text.strip()
     msg = await update.message.reply_text("دەستکرا بە پرۆسەی داگرتن... تکایە چاوەڕێ بکە ⏳")
 
     try:
-        # بەکارهێنانی API بۆ تێپەڕاندنی بلۆکی IPی سێرڤەر
-        api_url = f"https://api.cobalt.tools/api/json"
+        api_url = "https://api.cobalt.tools/api/json"
         headers = {
             "Accept": "application/json",
             "Content-Type": "application/json"
         }
         payload = {
-            "url": url,
-            "vCodec": "h264"
+            "url": url
         }
 
-        response = requests.post(api_url, json=payload, headers=headers)
-        data = response.json()
+        res = requests.post(api_url, json=payload, headers=headers, timeout=30)
+        data = res.json()
 
         if "url" in data:
-            download_link = data["url"]
-            video_data = requests.get(download_link).content
+            file_url = data["url"]
+            video_res = requests.get(file_url, stream=True)
             
-            file_path = "video.mp4"
+            file_path = "downloaded_video.mp4"
             with open(file_path, "wb") as f:
-                f.write(video_data)
+                for chunk in video_res.iter_content(chunk_size=8192):
+                    if chunk:
+                        f.write(chunk)
 
             await update.message.reply_text("🎬 فایلی ڤیدیۆ (Video):")
             with open(file_path, "rb") as video:
                 await update.message.reply_video(video)
 
-            os.remove(file_path)
+            if os.path.exists(file_path):
+                os.remove(file_path)
             await msg.delete()
         else:
-            await msg.edit_text("کێشەیەک لە لینکی سەرچاوەدا هەیە یان پشتیوانی ناکرێت.")
+            await msg.edit_text("کێشەیەک لە لينکەکەدا هەیە یان سێرڤەرەکە ناتوانێت ئەم ڤیدیۆیە دابەزێنێت.")
 
     except Exception as e:
-        await msg.edit_text(f"کێشەیەک ڕوویدا لە کاتی داگرتندا: {str(e)}")
+        await msg.edit_text(f"کێشەیەک ڕوویدا: {str(e)}")
 
 def main():
     app = Application.builder().token(TOKEN).build()
