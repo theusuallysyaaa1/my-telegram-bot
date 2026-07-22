@@ -5,6 +5,7 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from telegram.request import HTTPXRequest
 
+# تۆکنی نوێ و چالاکی بۆتەکەت
 TOKEN = "8990062832:AAGdMENQnPZFQ65_hgYnif8IzCy2JCq5V_I"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -78,10 +79,16 @@ def main():
     if not os.path.exists('downloads'):
         os.makedirs('downloads')
 
-    # ڕێکخستنی پڕۆکسی فەرمی PythonAnywhere
-    t_request = HTTPXRequest(proxy_url='http://proxy.server:3128')
+    # ڕێکخستنی پڕۆکسی بە شێوازی نوێی python-telegram-bot v20+
+    t_request = HTTPXRequest(proxy="http://proxy.server:3128")
 
-    app = Application.builder().token(TOKEN).request(t_request).get_updates_request(t_request).build()
+    app = (
+        Application.builder()
+        .token(TOKEN)
+        .request(t_request)
+        .get_updates_request(t_request)
+        .build()
+    )
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, download_media))
