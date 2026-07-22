@@ -5,7 +5,7 @@ from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from telegram.request import HTTPXRequest
 
-TOKEN = "8990062832:AAEGVGVum4r6erE25mqDFuSoah7zOdv1ShM"
+TOKEN = "8990062832:AAGdMENQnPZFQ65_hgYnif8IzCy2JCq5V_I"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_name = update.message.from_user.first_name
