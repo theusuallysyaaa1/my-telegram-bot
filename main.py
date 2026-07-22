@@ -3,9 +3,8 @@ import subprocess
 import yt_dlp
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
-from telegram.request import HTTPXRequest
 
-# تۆکنی نوێ و چالاکی بۆتەکەت
+# تۆکنە نوێ و ئەکتیڤەکەت
 TOKEN = "8990062832:AAGdMENQnPZFQ65_hgYnif8IzCy2JCq5V_I"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -79,14 +78,12 @@ def main():
     if not os.path.exists('downloads'):
         os.makedirs('downloads')
 
-    # ڕێکخستنی پڕۆکسی بە شێوازی نوێی python-telegram-bot v20+
-    t_request = HTTPXRequest(proxy="http://proxy.server:3128")
-
+    # دروستکردنی بۆت بە شێوازی دروستی python-telegram-bot v20+ بۆ PythonAnywhere
     app = (
         Application.builder()
         .token(TOKEN)
-        .request(t_request)
-        .get_updates_request(t_request)
+        .proxy_url("http://proxy.server:3128")
+        .get_updates_proxy_url("http://proxy.server:3128")
         .build()
     )
 
