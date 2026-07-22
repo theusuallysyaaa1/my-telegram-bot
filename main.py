@@ -4,12 +4,10 @@ import yt_dlp
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
-# تۆکنە نوێ و ئەکتیڤەکەت
 TOKEN = "8990062832:AAGdMENQnPZFQ65_hgYnif8IzCy2JCq5V_I"
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_name = update.message.from_user.first_name
-    
     welcome_text = (
         f"سڵاو بەرێز {user_name}\n"
         f"ئەم بۆتە پەرەی پێ دراوە بە زمانی شیرینی کوردی "
@@ -21,12 +19,10 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         f"___________________________\n"
         f"👨‍💻Developer(پەرەپێدەر): @srtx1x"
     )
-    
     await update.message.reply_text(welcome_text)
 
 async def download_media(update: Update, context: ContextTypes.DEFAULT_TYPE):
     url = update.message.text.strip()
-    
     if not (url.startswith("http://") or url.startswith("https://")):
         return
 
@@ -78,14 +74,8 @@ def main():
     if not os.path.exists('downloads'):
         os.makedirs('downloads')
 
-    # دروستکردنی بۆت بە شێوازی دروستی python-telegram-bot v20+ بۆ PythonAnywhere
-    app = (
-        Application.builder()
-        .token(TOKEN)
-        .proxy_url("http://proxy.server:3128")
-        .get_updates_proxy_url("http://proxy.server:3128")
-        .build()
-    )
+    # دروستکردنی بۆت بە شێوازی ئاسایی و بێ پڕۆکسی
+    app = Application.builder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, download_media))
